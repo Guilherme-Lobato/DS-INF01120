@@ -4,7 +4,7 @@ Este repositório foi criado para o armazenamento e versionamento dos trabalhos 
 
 ## 👥 Integrantes do Grupo
 * **Cristiano Zandoná Parnoff**
-* **Guilherme Lobato**
+* **Guilherme Souza da Roza Lobato**
 
 ## 📂 Objetivo do Repositório
 O foco deste espaço é centralizar a entrega de atividades práticas, laboratórios e o projeto final da cadeira, garantindo o acompanhamento do histórico de desenvolvimento e a colaboração entre os integrantes.
