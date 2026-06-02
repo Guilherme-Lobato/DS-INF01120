@@ -1,5 +1,5 @@
 from dtos.interface_dto import InterfaceDTO
-from services.music_service import MusicService
+from services.polifonia_service import PolifoniaService
 
 
 class InterfaceController:
@@ -7,8 +7,8 @@ class InterfaceController:
     Camada de controle: valida entrada, chama o service e formata a resposta.
     """
 
-    def __init__(self, music_service: MusicService | None = None):
-        self.music_service = music_service or MusicService()
+    def __init__(self, polifonia_service: PolifoniaService | None = None):
+        self.polifonia_service = polifonia_service or PolifoniaService()
 
     def processar_dados(self, dados: InterfaceDTO) -> dict:
         texto = dados.texto
@@ -16,11 +16,8 @@ class InterfaceController:
         if not texto or not texto.strip():
             raise ValueError("O texto enviado não pode estar vazio.")
 
-        sequencia = self.music_service.gerar_sequencia(
-            texto=texto,
-            instrumento_inicial=dados.instrumento_inicial,
-            oitava_inicial=dados.oitava_inicial,
-            volume_inicial=dados.volume_inicial,
+        sequencia = self.polifonia_service.gerar_timeline(
+            texto_completo=texto
         )
 
         return {

@@ -4,16 +4,15 @@ from models.evento_musical import EventoMusical, TipoEvento
 
 # Mapa: caractere → número do instrumento MIDI
 _INSTRUMENTOS = {
-    "!":  24,   # Bandoneon
+    "!":  22,   # Harmonica (Fase 2)
     "O":  110,  # Gaita de Foles
     "o":  110,
     "I":  110,
     "i":  110,
     "U":  110,
     "u":  110,
-    "\n": 123,  # Ondas do Mar (Seashore)
     ";":  15,   # Tubular Bells
-    ",":  114,  # Agogô
+    ",":  20,   # Church Organ (Fase 2)
 }
 
 

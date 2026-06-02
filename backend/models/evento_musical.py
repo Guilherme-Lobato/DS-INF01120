@@ -8,13 +8,13 @@ class TipoEvento(str, Enum):
     CHANGE_VOLUME = "CHANGE_VOLUME"
     CHANGE_INSTRUMENT = "CHANGE_INSTRUMENT"
     CHANGE_OCTAVE = "CHANGE_OCTAVE"
+    CHANGE_BPM = "CHANGE_BPM"
 
 
 @dataclass
 class EventoMusical:
     """
     Representa um único evento na sequência musical.
-    Usar dataclass em vez de dict garante tipagem, autocomplete e validação.
     """
 
     tipo: TipoEvento
@@ -23,6 +23,9 @@ class EventoMusical:
     oitava: int | None = None
     volume: int | None = None
     instrumento: int | None = None
+    voz_id: int | None = None
+    beat_absoluto: float | None = None
+    bpm: int | None = None
 
     def to_dict(self) -> dict:
         """Converte para dicionário serializável (JSON da API)."""
@@ -35,4 +38,10 @@ class EventoMusical:
             resultado["volume"] = self.volume
         if self.instrumento is not None:
             resultado["instrumento"] = self.instrumento
+        if self.voz_id is not None:
+            resultado["voz_id"] = self.voz_id
+        if self.beat_absoluto is not None:
+            resultado["beat_absoluto"] = self.beat_absoluto
+        if self.bpm is not None:
+            resultado["bpm"] = self.bpm
         return resultado

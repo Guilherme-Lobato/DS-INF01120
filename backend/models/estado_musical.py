@@ -1,7 +1,6 @@
 class EstadoMusical:
     """
-    Encapsula o estado mutável durante a interpretação do texto.
-    Cada chamada de geração cria uma instância nova, garantindo isolamento.
+    Encapsula o estado local (por voz) durante a interpretação do texto.
     """
 
     def __init__(
@@ -11,6 +10,7 @@ class EstadoMusical:
         volume: int = 64,
         oitava_default: int = 4,
         oitava_max: int = 9,
+        oitava_min: int = 0,
         volume_max: int = 127,
     ):
         self.instrumento = instrumento
@@ -18,6 +18,7 @@ class EstadoMusical:
         self.volume = volume
         self.oitava_default = oitava_default
         self.oitava_max = oitava_max
+        self.oitava_min = oitava_min
         self.volume_max = volume_max
         self.ultima_nota: str | None = None
         self.anterior_era_nota: bool = False
@@ -30,6 +31,11 @@ class EstadoMusical:
     def subir_oitava(self) -> None:
         self.oitava += 1
         if self.oitava > self.oitava_max:
+            self.oitava = self.oitava_default
+
+    def diminuir_oitava(self) -> None:
+        self.oitava -= 1
+        if self.oitava < self.oitava_min:
             self.oitava = self.oitava_default
 
     def trocar_instrumento(self, novo: int) -> None:

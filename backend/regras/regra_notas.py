@@ -12,6 +12,7 @@ _NOTAS = {
     "F": "F",   # Fá
     "G": "G",   # Sol
     "H": "Bb",  # Si Bemol
+    "M": "Eb",  # Mi Bemol (tratado como M no PolifoniaService)
 }
 
 
