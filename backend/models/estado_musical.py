@@ -1,3 +1,24 @@
+"""
+EstadoMusical — Versão refatorada.
+
+Antes: classe com 4 eixos de mudança independentes (oitava, volume,
+instrumento e histórico de notas), caracterizando o smell
+Divergent Change.
+
+Depois: fachada coesa que agrega três controles especializados
+(ControleOitava, ControleVolume, HistoricoNotas) e mantém o instrumento
+como atributo simples (sua lógica é trivial).
+
+A API pública foi preservada via @property e métodos de delegação,
+de modo que NENHUMA das 7 regras (RegraNota, RegraPausa, RegraVolume,
+RegraInstrumento, RegraDigito, RegraOitava, RegraDefault) precisou
+ser alterada.
+"""
+from models.controle_oitava import ControleOitava
+from models.controle_volume import ControleVolume
+from models.historico_notas import HistoricoNotas
+
+
 class EstadoMusical:
     """
     Encapsula o estado local (por voz) durante a interpretação do texto.
@@ -13,6 +34,11 @@ class EstadoMusical:
         oitava_min: int = 0,
         volume_max: int = 127,
     ):
+        self._oitava = ControleOitava(
+            atual=oitava, default=oitava_default, maximo=oitava_max
+        )
+        self._volume = ControleVolume(atual=volume, maximo=volume_max)
+        self._historico = HistoricoNotas()
         self.instrumento = instrumento
         self.oitava = oitava
         self.volume = volume
@@ -23,15 +49,31 @@ class EstadoMusical:
         self.ultima_nota: str | None = None
         self.anterior_era_nota: bool = False
 
-    # ── Métodos de mutação com lógica de negócio embutida ──
+    # ── Propriedades de leitura: preservam a API antiga ──
 
-    def dobrar_volume(self) -> None:
-        self.volume = min(self.volume * 2, self.volume_max)
+    @property
+    def oitava(self) -> int:
+        return self._oitava.atual
+
+    @property
+    def volume(self) -> int:
+        return self._volume.atual
+
+    @property
+    def ultima_nota(self) -> str | None:
+        return self._historico.ultima
+
+    @property
+    def anterior_era_nota(self) -> bool:
+        return self._historico.anterior_era_nota
+
+    # ── Mutações: cada uma delega para o controle responsável ──
 
     def subir_oitava(self) -> None:
-        self.oitava += 1
-        if self.oitava > self.oitava_max:
-            self.oitava = self.oitava_default
+        self._oitava.subir()
+
+    def dobrar_volume(self) -> None:
+        self._volume.dobrar()
 
     def diminuir_oitava(self) -> None:
         self.oitava -= 1
@@ -45,10 +87,7 @@ class EstadoMusical:
         self.instrumento = (self.instrumento + valor) % 128
 
     def registrar_nota(self, nota: str) -> None:
-        """Chamado após tocar uma nota para atualizar o histórico."""
-        self.ultima_nota = nota
-        self.anterior_era_nota = True
+        self._historico.registrar_nota(nota)
 
     def registrar_nao_nota(self) -> None:
-        """Chamado quando o caractere processado NÃO é uma nota direta."""
-        self.anterior_era_nota = False
+        self._historico.registrar_nao_nota()
