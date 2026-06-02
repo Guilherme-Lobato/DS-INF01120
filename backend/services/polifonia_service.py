@@ -1,5 +1,6 @@
 from models.voz import Voz
 from models.evento_musical import EventoMusical, TipoEvento
+from models.contexto_global import ContextoGlobal
 from regras import RegraBase, criar_regras_padrao
 
 
@@ -11,7 +12,7 @@ class PolifoniaService:
     def __init__(self, regras: list[RegraBase] | None = None):
         self.regras = regras or criar_regras_padrao()
 
-    def gerar_timeline(self, texto_completo: str) -> list[dict]:
+    def gerar_timeline(self, texto_completo: str, bpm_inicial: int = 120) -> list[dict]:
         """
         Recebe o texto completo, divide em linhas (vozes) e gera a timeline
         absoluta com todos os eventos ordenados cronologicamente.
@@ -23,8 +24,19 @@ class PolifoniaService:
             eventos_voz = self._processar_voz(voz)
             todos_eventos.extend(eventos_voz)
 
-        # Ordenar todos os eventos pelo beat absoluto
+        # Ordenar todos os eventos pelo beat absoluto de forma cronológica
+        # Eventos do mesmo beat devem manter a ordem em que foram gerados (Python sort é estável)
         todos_eventos.sort(key=lambda e: e.beat_absoluto)
+
+        # Segunda passagem: resolver o Contexto Global (ex: BPM) em ordem cronológica
+        contexto = ContextoGlobal(bpm_inicial=bpm_inicial)
+        for evento in todos_eventos:
+            if evento.tipo == TipoEvento.CHANGE_BPM:
+                if evento.char == ">":
+                    contexto.acelerar()
+                elif evento.char == "<":
+                    contexto.desacelerar()
+                evento.bpm = contexto.bpm_atual
 
         return [e.to_dict() for e in todos_eventos]
 
