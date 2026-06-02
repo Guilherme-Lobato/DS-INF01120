@@ -25,17 +25,18 @@ function instrumentoParaOscilador(instrumento: number): Tone.ToneOscillatorType 
 }
 
 export class AudioPlayer {
-  private synth: Tone.PolySynth;
+  private synths: Record<number, Tone.PolySynth> = {};
   private playing = false;
 
-  constructor() {
-    this.synth = new Tone.PolySynth(Tone.Synth).toDestination();
+  private getSynth(voz_id: number): Tone.PolySynth {
+    if (!this.synths[voz_id]) {
+      this.synths[voz_id] = new Tone.PolySynth(Tone.Synth).toDestination();
+    }
+    return this.synths[voz_id];
   }
 
   /**
-   * Toca a sequência de eventos recebida do backend.
-   * onIndex é chamado a cada evento para atualizar a UI.
-   * Retorna uma Promise que resolve quando terminar ou for parado.
+   * Toca a sequência de eventos (Polifônica) calculando os tempos absolutos.
    */
   async tocar(
     eventos: ApiEvento[],
@@ -51,53 +52,68 @@ export class AudioPlayer {
     transport.stop();
 
     return new Promise<void>((resolve) => {
-      let index = 0;
+      let activeEvents = 0;
 
-      const schedule = (time: number) => {
-        if (!this.playing || index >= eventos.length) {
-          this.parar();
-          resolve();
-          return;
-        }
+      if (eventos.length === 0) {
+        resolve();
+        return;
+      }
 
-        const ev = eventos[index];
-        onIndex(index);
+      eventos.forEach((ev, index) => {
+        const beat = ev.beat_absoluto ?? index;
+        const time = beat * (60 / bpm); // Em segundos absolutos
 
-        switch (ev.evento) {
-          case 'TOCAR_NOTA':
-            if (ev.nota && ev.oitava !== undefined) {
-              if (ev.instrumento !== undefined) {
-                this.synth.set({ oscillator: { type: instrumentoParaOscilador(ev.instrumento) } });
+        transport.schedule((t) => {
+          if (!this.playing) return;
+          
+          onIndex(index);
+
+          const trackId = ev.voz_id ?? 0;
+          const synth = this.getSynth(trackId);
+
+          switch (ev.evento) {
+            case 'CHANGE_BPM':
+              if (ev.bpm) transport.bpm.value = ev.bpm;
+              break;
+
+            case 'TOCAR_NOTA':
+              if (ev.nota && ev.oitava !== undefined) {
+                if (ev.instrumento !== undefined) {
+                  synth.set({ oscillator: { type: instrumentoParaOscilador(ev.instrumento) } });
+                }
+                if (ev.volume !== undefined) {
+                  const normalized = Math.max(ev.volume, 1) / 127;
+                  synth.volume.value = Tone.gainToDb(normalized);
+                }
+                // Duração de 1 beat
+                synth.triggerAttackRelease(`${ev.nota}${ev.oitava}`, 60 / transport.bpm.value, t);
               }
+              break;
+
+            case 'CHANGE_INSTRUMENT':
+              if (ev.instrumento !== undefined) {
+                synth.set({ oscillator: { type: instrumentoParaOscilador(ev.instrumento) } });
+              }
+              break;
+
+            case 'CHANGE_VOLUME':
               if (ev.volume !== undefined) {
                 const normalized = Math.max(ev.volume, 1) / 127;
-                this.synth.volume.value = Tone.gainToDb(normalized);
+                synth.volume.value = Tone.gainToDb(normalized);
               }
-              this.synth.triggerAttackRelease(`${ev.nota}${ev.oitava}`, '8n', time);
-            }
-            break;
+              break;
+          }
 
-          case 'CHANGE_INSTRUMENT':
-            if (ev.instrumento !== undefined) {
-              this.synth.set({ oscillator: { type: instrumentoParaOscilador(ev.instrumento) } });
-            }
-            break;
+          activeEvents++;
+          if (activeEvents >= eventos.length) {
+            setTimeout(() => {
+              this.parar();
+              resolve();
+            }, (60 / transport.bpm.value) * 1000);
+          }
+        }, `+${time}`);
+      });
 
-          case 'CHANGE_VOLUME':
-            if (ev.volume !== undefined) {
-              const normalized = Math.max(ev.volume, 1) / 127;
-              this.synth.volume.value = Tone.gainToDb(normalized);
-            }
-            break;
-
-          // CHANGE_OCTAVE e PAUSA não produzem som
-        }
-
-        index++;
-        transport.schedule(schedule, time + Tone.Time('8n').toSeconds());
-      };
-
-      transport.schedule(schedule, Tone.now());
       transport.start();
     });
   }
@@ -107,11 +123,12 @@ export class AudioPlayer {
     const transport = Tone.getTransport();
     transport.stop();
     transport.cancel();
-    this.synth.releaseAll();
+    Object.values(this.synths).forEach((s) => s.releaseAll());
   }
 
   dispose(): void {
     this.parar();
-    this.synth.dispose();
+    Object.values(this.synths).forEach((s) => s.dispose());
+    this.synths = {};
   }
 }

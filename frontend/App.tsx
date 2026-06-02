@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Play, Square, Music, Volume2, Clock, Layers, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { Play, Square, Music, Volume2, Clock, Layers, Trash2, Wifi, WifiOff, Upload, Download, FileAudio } from 'lucide-react';
 import { gerarSequencia, checarBackend, type ApiEvento } from './services/api';
 import { AudioPlayer } from './services/audio';
 
@@ -16,6 +16,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [events, setEvents] = useState<ApiEvento[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [midiBase64, setMidiBase64] = useState<string | null>(null);
 
   // ── Estado da UI ──
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
@@ -24,6 +25,7 @@ export default function App() {
 
   // ── Refs ──
   const playerRef = useRef<AudioPlayer | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Inicializa o player de áudio ──
   useEffect(() => {
@@ -46,7 +48,6 @@ export default function App() {
 
   // ── Gerar e Tocar ──
   const handlePlay = async () => {
-    // Se já está tocando, para primeiro
     if (isPlaying) {
       handleStop();
       return;
@@ -65,9 +66,7 @@ export default function App() {
     }
 
     try {
-      // Garante que qualquer reprodução anterior parou
       playerRef.current?.parar();
-
       setStatusMsg('Enviando texto ao backend...');
 
       const data = await gerarSequencia({
@@ -79,6 +78,7 @@ export default function App() {
       });
 
       setEvents(data.sequencia);
+      setMidiBase64(data.midi_base64 || null);
       setStatusMsg(`${data.total_eventos} eventos gerados`);
       setIsPlaying(true);
       setCurrentIndex(0);
@@ -87,7 +87,6 @@ export default function App() {
         setCurrentIndex(i);
       });
 
-      // Terminou naturalmente
       setIsPlaying(false);
       setCurrentIndex(-1);
       setStatusMsg('Reprodução finalizada');
@@ -102,8 +101,47 @@ export default function App() {
     handleStop();
     setText('');
     setEvents([]);
+    setMidiBase64(null);
     setStatusMsg('');
     setErro('');
+  };
+
+  // ── Manipulação de Arquivos ──
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setText(event.target?.result as string);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDownloadTxt = () => {
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'composicao.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadMidi = () => {
+    if (!midiBase64) return;
+    const byteCharacters = atob(midiBase64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'audio/midi' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fuga_bach.mid';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -116,7 +154,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tighter uppercase italic">Texto para Música</h1>
-            <p className="text-[10px] uppercase tracking-widest opacity-50 font-mono">UFRGS — INF01120 — Fase 1</p>
+            <p className="text-[10px] uppercase tracking-widest opacity-50 font-mono">UFRGS — INF01120 — Fase 2 (Polifonia)</p>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs font-mono">
@@ -140,6 +178,20 @@ export default function App() {
       <main className="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* ── Coluna Esquerda: Entrada e Controles ── */}
         <div className="lg:col-span-8 space-y-6">
+          {/* Ações de Arquivo */}
+          <div className="flex gap-4">
+            <input type="file" accept=".txt" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded border border-white/10 transition-colors text-sm font-mono uppercase">
+              <Upload className="w-4 h-4" /> Importar TXT
+            </button>
+            <button onClick={handleDownloadTxt} disabled={!text.trim()} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-white/10 transition-colors text-sm font-mono uppercase">
+              <Download className="w-4 h-4" /> Salvar TXT
+            </button>
+            <button onClick={handleDownloadMidi} disabled={!midiBase64} className="flex items-center gap-2 px-4 py-2 bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-orange-500/30 transition-colors text-sm font-mono uppercase ml-auto">
+              <FileAudio className="w-4 h-4" /> Baixar MIDI
+            </button>
+          </div>
+
           {/* Campo de Texto */}
           <section className="relative group">
             <div className="absolute -top-3 left-4 px-2 bg-[#0a0a0a] text-[10px] uppercase tracking-widest font-mono z-10 text-orange-500">
@@ -149,7 +201,7 @@ export default function App() {
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Digite ou cole seu texto aqui (conto, poema, notícia...)"
+                placeholder="Digite ou cole seu texto aqui (ex: [0] C D E F \n [4] G A B C)"
                 className="w-full h-64 bg-white/5 border border-white/10 rounded-xl p-6 font-mono text-lg focus:outline-none focus:border-orange-500/50 transition-all resize-none"
               />
               <button
@@ -196,7 +248,7 @@ export default function App() {
         <div className="lg:col-span-4 space-y-6">
           <section className="bg-white/5 border border-white/10 rounded-xl p-6 h-[400px] flex flex-col">
             <div className="text-[10px] uppercase tracking-widest font-mono text-orange-500 mb-4">
-              Sequência Musical
+              Sequência Musical (Vozes Mescladas)
             </div>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
               <div className="flex flex-wrap gap-2">
@@ -211,9 +263,11 @@ export default function App() {
                         backgroundColor: idx === currentIndex ? '#f97316' : 'rgba(255,255,255,0.1)',
                         color: idx === currentIndex ? '#000' : '#fff',
                       }}
-                      className="w-8 h-8 flex items-center justify-center rounded text-xs font-mono font-bold transition-colors"
+                      className="px-2 h-8 flex items-center justify-center rounded text-xs font-mono font-bold transition-colors"
+                      title={`Voz: ${ev.voz_id} | Beat: ${ev.beat_absoluto}`}
                     >
                       {ev.char === '\\n' ? '↵' : ev.char === ' ' ? '·' : ev.char}
+                      {ev.voz_id !== undefined && <span className="ml-1 opacity-50 text-[8px]">v{ev.voz_id}</span>}
                     </motion.div>
                   ))
                 ) : (
@@ -232,7 +286,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-orange-500 text-black p-4 rounded-xl flex justify-between items-center"
             >
-              <div className="text-xs font-bold uppercase">Evento Atual</div>
+              <div className="text-xs font-bold uppercase">Voz {events[currentIndex].voz_id}</div>
               <div className="text-2xl font-black font-mono">
                 {events[currentIndex].evento === 'TOCAR_NOTA'
                   ? `${events[currentIndex].nota}${events[currentIndex].oitava}`

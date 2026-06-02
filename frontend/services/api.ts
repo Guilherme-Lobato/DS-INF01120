@@ -15,6 +15,9 @@ export interface ApiEvento {
   oitava?: number;
   volume?: number;
   instrumento?: number;
+  voz_id?: number;
+  beat_absoluto?: number;
+  bpm?: number;
 }
 
 export interface ApiResponse {
@@ -22,6 +25,7 @@ export interface ApiResponse {
   bpm: number;
   total_eventos: number;
   sequencia: ApiEvento[];
+  midi_base64?: string;
 }
 
 /**
