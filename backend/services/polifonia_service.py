@@ -44,10 +44,17 @@ class PolifoniaService:
         eventos = []
         beat_atual = float(voz.atraso_beats)
 
-        # Tratar Mb como um único caractere antes do loop
-        texto_limpo = voz.texto_processar.replace("Mb", "M")
+        texto = voz.texto_processar
+        i = 0
+        n = len(texto)
+        while i < n:
+            char = texto[i]
 
-        for char in texto_limpo:
+            # Lookahead para tratar 'Mb' como um único caractere musical
+            if char == "M" and i + 1 < n and texto[i+1] == "b":
+                char = "Mb"
+                i += 1  # Pula o 'b' na próxima iteração
+
             evento = self._aplicar_regras(char, voz)
             if evento:
                 evento.voz_id = voz.id_voz
@@ -58,13 +65,13 @@ class PolifoniaService:
                     beat_atual += 1.0
                 
                 eventos.append(evento)
+            
+            i += 1
 
         return eventos
 
     def _aplicar_regras(self, char: str, voz: Voz) -> EventoMusical | None:
         """Delega o caractere para a regra correta."""
-        # Se for M, mapeamos internamente para tratar como Mi Bemol na RegraNota
-        # Na RegraNota, não temos M mapeado. Vamos fazer o RegraNota mapear M para Eb.
         for regra in self.regras:
             if regra.deve_processar(char, voz.estado):
                 return regra.processar(char, voz.estado)
