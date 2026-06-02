@@ -1,6 +1,4 @@
-# Registro: Refatoração do Backend - Parte 1 (Remoção de Bad Smells)
-
-**Data:** 01/06/2026
+# Registro: Refatoração do Backend (Remoção de Bad Smells)
 
 ## O que foi feito?
 

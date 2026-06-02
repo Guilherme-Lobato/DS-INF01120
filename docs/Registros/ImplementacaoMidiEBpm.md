@@ -1,7 +1,5 @@
 # Registro: Implementação do Suporte a Arquivos MIDI e Eventos Globais de BPM
 
-**Data:** 01/06/2026
-
 ## O que foi feito?
 
 Nesta etapa, o foco foi adicionar as novas funcionalidades exigidas pela Fase 2 relacionadas à polifonia e à exportação do resultado sonoro para um arquivo `.mid`.
