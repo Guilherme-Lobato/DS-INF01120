@@ -1,41 +1,35 @@
-# Especificação de Classes - Fase 1
+# Definições de Classes - Fase 1
 
-Esta seção descreve as classes que compõem o sistema na Fase 1. O objetivo é manter o código modular e aderir aos princípios SOLID, como a Responsabilidade Única (SRP).
+As classes abaixo foram projetadas para atender aos requisitos da Fase 1, utilizando princípios da Orientação a Objetos.
 
-## Classe EstadoMusical
-Representa o estado mutável do sistema durante a interpretação do texto. À medida que o texto é lido, o estado guarda as propriedades atuais da música (instrumento, oitava, volume, etc.).
-- **Atributos:**
-  - `instrumento (inteiro)`: Número MIDI do instrumento atual.
-  - `oitava (inteiro)`: Oitava atual (1 a 9).
-  - `volume (inteiro)`: Volume atual (0 a 127).
-  - `ultima_nota (texto)`: Guarda a última nota tocada.
-  - `anterior_era_nota (booleano)`: Indica se o caractere processado imediatamente antes resultou em uma nota.
-- **Métodos:**
-  - `dobrar_volume()`: Multiplica o volume atual por dois. Se exceder 127, define para 127 (máximo). Retorna ao volume base se não puder dobrar.
-  - `subir_oitava()`: Incrementa a oitava atual em 1.
-  - `trocar_instrumento(novo_instrumento)`: Substitui o instrumento atual por um novo valor MIDI.
-  - `somar_instrumento(valor)`: Soma um valor numérico ao instrumento atual.
-  - `registrar_nota(nota)`: Atualiza a `ultima_nota` com a nota tocada e define `anterior_era_nota` como verdadeiro.
+### Classe EstadoMusical
+Representa o estado mutável durante a interpretação do texto.
+- **Atributo instrumento (inteiro):** Número MIDI do instrumento atual.
+- **Atributo oitava (inteiro):** Oitava atual (1 a 9).
+- **Atributo volume (inteiro):** Volume atual (0 a 127).
+- **Atributo ultima_nota (texto):** Última nota tocada.
+- **Atributo anterior_era_nota (booleano):** Indica se o caractere anterior gerou uma nota.
+- **Método dobrar_volume():** Dobra o volume ou seta o valor máximo.
+- **Método subir_oitava():** Incrementa a oitava atual.
+- **Método trocar_instrumento(novo):** Define um novo instrumento.
+- **Método somar_instrumento(valor):** Soma um valor numérico ao instrumento atual.
+- **Método registrar_nota(nota):** Atualiza o histórico para saber qual foi a última nota.
 
-## Classe EventoMusical
-Representa um único evento musical ou de controle a ser enviado para o frontend.
-- **Atributos:**
-  - `tipo (texto)`: Define a ação, como `"tocar"`, `"pausar"`, ou alteração de contexto.
-  - `char (texto)`: O caractere do texto original que gerou este evento.
-  - `nota (texto)`: A nota musical (ex: "C", "D", "E").
-  - `oitava (inteiro)`: A oitava em que a nota deve ser tocada.
-  - `volume (inteiro)`: O volume da nota.
-  - `instrumento (inteiro)`: O instrumento designado para esta nota.
+### Classe EventoMusical
+Representa um único evento na sequência musical.
+- **Atributo tipo:** O tipo da ação (tocar, pausar, mudar volume, etc.).
+- **Atributo char (texto):** Caractere original do texto.
+- **Atributo nota (texto):** Nome da nota gerada.
+- **Atributo oitava (inteiro):** Oitava exata do evento.
+- **Atributo volume (inteiro):** Volume exato do evento.
+- **Atributo instrumento (inteiro):** Instrumento exato do evento.
 
-## Classe RegraBase
-É uma classe abstrata (ou interface) que dita o formato para todas as regras de mapeamento (A-G para notas, espaços para volume, etc.). Isso aplica o Princípio Aberto-Fechado (OCP), permitindo adicionar novas regras sem alterar as antigas.
-- **Métodos:**
-  - `deve_processar(char, estado)`: Retorna um valor booleano indicando se a regra deve ser aplicada para aquele caractere específico.
-  - `processar(char, estado)`: Modifica o `EstadoMusical` e gera um `EventoMusical` correspondente à ação.
+### Classe RegraBase
+Abstração para as regras de mapeamento de texto para som.
+- **Método deve_processar(char, estado):** Retorna verdadeiro ou falso verificando se a regra se aplica àquele caractere.
+- **Método processar(char, estado):** Aplica a regra musical e retorna o evento gerado.
 
-## Classe MusicService
-Orquestra o fluxo de geração musical. É responsável por receber o texto, iterar sobre ele e invocar as regras.
-- **Atributos:**
-  - `regras (lista)`: Contém as instâncias de todas as classes filhas de `RegraBase`.
-- **Métodos:**
-  - `gerar_sequencia(texto, instrumento_inicial, oitava_inicial, volume_inicial)`: Inicializa o `EstadoMusical` com os parâmetros fornecidos e varre a string `texto`. Para cada caractere, procura uma `RegraBase` aplicável na lista de `regras` e guarda o `EventoMusical` resultante em uma lista de saída. Retorna esta lista de eventos.
+### Classe PolifoniaService (antigo MusicService)
+Orquestra a geração musical aplicando as regras ao texto.
+- **Atributo regras (lista):** Lista contendo as instâncias das regras de mapeamento.
+- **Método gerar_sequencia(texto, instr, oitava, vol):** Itera o texto completo e retorna a lista final de eventos.
