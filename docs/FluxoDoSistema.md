@@ -16,7 +16,7 @@ Optamos por uma arquitetura cliente-servidor para isolar a complexidade de regra
 Quando o usuário insere um texto na área de texto (seja digitando ou carregando via `.txt`) e clica em **Gerar e Tocar**, o fluxo segue os seguintes passos:
 
 ### 2.1. Frontend: Preparação e Requisição
-1. **Coleta de Dados:** O componente `App.tsx` junta o texto digitado e as configurações globais numéricas (BPM, Instrumento Inicial, Oitava e Volume).
+1. **Coleta de Dados:** O componente `App.tsx` junta o texto digitado e a configuração global numérica de BPM. (Os parâmetros de Instrumento, Oitava e Volume foram removidos na Fase 2, pois cada voz agora possui seus próprios valores independentes ditados pelo Backend).
 2. **Chamada de API:** A função `gerarSequencia` no arquivo `services/api.ts` cria uma requisição HTTP POST para o endpoint `/enviar-form` do Backend, empacotando os dados num objeto JSON (conforme contrato da interface `ApiConfig`).
 
 ### 2.2. Backend: Recebimento e Validação

@@ -40,14 +40,10 @@ class EstadoMusical:
         self._volume = ControleVolume(atual=volume, maximo=volume_max)
         self._historico = HistoricoNotas()
         self.instrumento = instrumento
-        self.oitava = oitava
-        self.volume = volume
         self.oitava_default = oitava_default
         self.oitava_max = oitava_max
         self.oitava_min = oitava_min
         self.volume_max = volume_max
-        self.ultima_nota: str | None = None
-        self.anterior_era_nota: bool = False
 
     # ── Propriedades de leitura: preservam a API antiga ──
 
@@ -55,9 +51,17 @@ class EstadoMusical:
     def oitava(self) -> int:
         return self._oitava.atual
 
+    @oitava.setter
+    def oitava(self, valor: int) -> None:
+        self._oitava.atual = valor
+
     @property
     def volume(self) -> int:
         return self._volume.atual
+
+    @volume.setter
+    def volume(self, valor: int) -> None:
+        self._volume.atual = valor
 
     @property
     def ultima_nota(self) -> str | None:
