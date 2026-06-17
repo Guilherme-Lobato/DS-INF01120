@@ -242,6 +242,44 @@ export default function App() {
             {statusMsg && <p className="text-center text-xs font-mono opacity-50">{statusMsg}</p>}
             {erro && <p className="text-center text-xs font-mono text-red-400">{erro}</p>}
           </div>
+
+          {/* Regras de Mapeamento */}
+          <details className="bg-white/5 border border-white/10 rounded-xl p-4 group">
+            <summary className="text-[10px] uppercase tracking-widest font-mono text-orange-500 cursor-pointer flex justify-between items-center outline-none">
+              Regras de Mapeamento (Clique para expandir)
+              <span className="group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono text-white/70">
+              <div>
+                <h4 className="font-bold text-white mb-2">Estrutura (Fuga de Bach)</h4>
+                <ul className="space-y-1 list-disc list-inside">
+                  <li>Cada linha do texto é uma voz independente (Voz 0, 1, 2...).</li>
+                  <li><span className="text-orange-400">[n]</span>: No início da linha, atrasa n beats (ex: [4]).</li>
+                </ul>
+                <h4 className="font-bold text-white mt-3 mb-2">Notas e Pausas</h4>
+                <ul className="space-y-1 list-disc list-inside">
+                  <li><span className="text-orange-400">A a G</span>: Notas (Lá a Sol).</li>
+                  <li><span className="text-orange-400">H</span>: Nota Si Bemol.</li>
+                  <li><span className="text-orange-400">a a h minúsculas</span>: Pausa.</li>
+                  <li><span className="text-orange-400">Consoantes (outras)</span>: Repete última nota ou pausa.</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-bold text-white mb-2">Controles e Instrumentos</h4>
+                <ul className="space-y-1 list-disc list-inside">
+                  <li><span className="text-orange-400">Espaço</span>: Dobra o volume da voz atual.</li>
+                  <li><span className="text-orange-400">? ou .</span>: Aumenta a oitava da voz.</li>
+                  <li><span className="text-orange-400">V</span>: Diminui a oitava da voz.</li>
+                  <li><span className="text-orange-400">&gt; / &lt;</span>: Aumenta / Diminui o BPM global.</li>
+                  <li><span className="text-orange-400">!</span>: Instrumento Harmônica (GM 22).</li>
+                  <li><span className="text-orange-400">Vogais O, I, U</span>: Gaita de Foles (GM 110).</li>
+                  <li><span className="text-orange-400">Dígito Par</span>: Soma ao instrumento atual.</li>
+                  <li><span className="text-orange-400">Dígito Ímpar ou ;</span>: Tubular Bells (GM 15).</li>
+                  <li><span className="text-orange-400">,</span>: Church Organ (GM 20).</li>
+                </ul>
+              </div>
+            </div>
+          </details>
         </div>
 
         {/* ── Coluna Direita: Visualização da Sequência ── */}
