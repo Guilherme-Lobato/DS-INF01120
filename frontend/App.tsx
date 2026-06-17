@@ -214,12 +214,9 @@ export default function App() {
             </div>
           </section>
 
-          {/* Configurações — Requisito 4 do enunciado */}
+          {/* Configurações Globais */}
           <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <ConfigCard icon={<Clock className="w-4 h-4" />} label="BPM" value={bpm} onChange={setBpm} min={40} max={240} />
-            <ConfigCard icon={<Layers className="w-4 h-4" />} label="Instrumento" value={initialInstrument} onChange={setInitialInstrument} min={0} max={127} />
-            <ConfigCard icon={<Music className="w-4 h-4" />} label="Oitava" value={initialOctave} onChange={setInitialOctave} min={1} max={8} />
-            <ConfigCard icon={<Volume2 className="w-4 h-4" />} label="Volume" value={initialVolume} onChange={setInitialVolume} min={0} max={127} />
           </section>
 
           {/* Botão de Tocar / Parar */}
@@ -368,14 +365,6 @@ function ConfigCard({ icon, label, value, onChange, min, max }: {
         value={value}
         onChange={(e) => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || min)))}
         className="bg-transparent text-xl font-bold font-mono w-full focus:outline-none text-orange-500"
-      />
-      <input
-        type="range"
-        min={min}
-        max={max}
-        value={value}
-        onChange={(e) => onChange(parseInt(e.target.value))}
-        className="w-full accent-orange-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
       />
     </div>
   );

@@ -66,7 +66,14 @@ export class AudioPlayer {
         transport.schedule((t) => {
           if (!this.playing) return;
           
-          onIndex(index);
+          const timeUntilEvent = (t - Tone.now()) * 1000;
+          if (timeUntilEvent > 0) {
+            setTimeout(() => {
+              if (this.playing) onIndex(index);
+            }, timeUntilEvent);
+          } else {
+            onIndex(index);
+          }
 
           const trackId = ev.voz_id ?? 0;
           const synth = this.getSynth(trackId);

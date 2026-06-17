@@ -27,9 +27,9 @@ class MidiExporter:
         Recebe a sequência gerada pelo PolifoniaService e retorna o MIDI encodado em Base64
         para ser baixado facilmente pelo frontend.
         """
-        # Identificar quantas vozes existem
+        # Identificar o maior ID de voz para alocar o número correto de tracks
         vozes_ids = {e["voz_id"] for e in sequencia if "voz_id" in e}
-        num_tracks = max(len(vozes_ids), 1)
+        num_tracks = max(vozes_ids) + 1 if vozes_ids else 1
         
         # Cria o arquivo MIDI com uma track por voz
         midi = MIDIFile(num_tracks)

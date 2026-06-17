@@ -41,5 +41,15 @@ npm install
 npm run dev
 ```
 
+## 🧪 Como Rodar os Testes (Backend)
+
+O backend possui cobertura de testes unitários superior a 99% implementada com `pytest` (e `unittest`). Para executar os testes e visualizar a cobertura, certifique-se de estar no diretório `backend` e ter instalado os requisitos:
+
+```bash
+cd backend
+pip install -r requirements.txt
+python -m pytest --cov=. tests/
+```
+
 ---
 *Instituto de Informática - UFRGS*
