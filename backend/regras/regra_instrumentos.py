@@ -3,14 +3,20 @@ from models.estado_musical import EstadoMusical
 from models.evento_musical import EventoMusical, TipoEvento
 
 # Mapa: caractere → número do instrumento MIDI
+#
+# NOTA DE DESIGN (Fase 2): As vogais O/I/U (maiúsculas e minúsculas) foram
+# REMOVIDAS deste mapa. Na Fase 1 elas trocavam o instrumento para Gaita de
+# Foles (GM 110), mas o enunciado da Fase 2 (mapeamento da fuga) determina que
+# "Outras letras (vogais O,I,U e consoantes não classificadas) seguem a regra
+# original: se o caractere anterior era nota, repete a última nota; caso
+# contrário, pausa." Sem a entrada aqui, esses caracteres caem em RegraDefault.
+#
+# O enunciado é internamente inconsistente em outros pontos; esta mudança foi
+# deliberadamente isolada para reversão fácil — basta readicionar as 6 linhas
+# de vogais abaixo caso o professor confirme o comportamento da Fase 1.
+# Ver docs/Registros/RemocaoVogaisInstrumento.md.
 _INSTRUMENTOS = {
     "!":  22,   # Harmonica (Fase 2)
-    "O":  110,  # Gaita de Foles
-    "o":  110,
-    "I":  110,
-    "i":  110,
-    "U":  110,
-    "u":  110,
     ";":  15,   # Tubular Bells
     ",":  20,   # Church Organ (Fase 2)
 }

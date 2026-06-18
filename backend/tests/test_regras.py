@@ -47,13 +47,34 @@ class TestRegras(unittest.TestCase):
     def test_regra_instrumentos(self):
         regra = RegraInstrumento()
         self.assertTrue(regra.deve_processar('!', self.estado))
-        self.assertTrue(regra.deve_processar('I', self.estado))
         self.assertTrue(regra.deve_processar(';', self.estado))
         self.assertTrue(regra.deve_processar(',', self.estado))
-        
+
         evento = regra.processar('!', self.estado)
         self.assertEqual(evento.tipo, TipoEvento.CHANGE_INSTRUMENT)
         self.assertEqual(self.estado.instrumento, 22)
+
+    def test_vogais_oiu_nao_trocam_instrumento(self):
+        """Fase 2: vogais O/I/U não são mais mapeadas para instrumento;
+        devem cair na RegraDefault (repete nota anterior ou pausa).
+        Ver docs/Registros/RemocaoVogaisInstrumento.md."""
+        regra_inst = RegraInstrumento()
+        for vogal in ('O', 'o', 'I', 'i', 'U', 'u'):
+            self.assertFalse(
+                regra_inst.deve_processar(vogal, self.estado),
+                f"RegraInstrumento não deveria processar '{vogal}'",
+            )
+
+        default = RegraDefault()
+        # Sem nota anterior -> pausa
+        evento = default.processar('O', self.estado)
+        self.assertEqual(evento.tipo, TipoEvento.PAUSA)
+
+        # Com nota anterior -> repete a última nota
+        self.estado.registrar_nota('A')
+        evento2 = default.processar('I', self.estado)
+        self.assertEqual(evento2.tipo, TipoEvento.TOCAR_NOTA)
+        self.assertEqual(evento2.nota, 'A')
 
     def test_regra_digitos(self):
         regra = RegraDigito()

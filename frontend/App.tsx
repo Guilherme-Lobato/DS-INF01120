@@ -27,6 +27,12 @@ export default function App() {
   const playerRef = useRef<AudioPlayer | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Handle do arquivo aberto via File System Access API (quando suportada),
+  // usado para "Salvar" sobrescrevendo o arquivo original.
+  const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
+  const [hasFileHandle, setHasFileHandle] = useState(false);
+  const supportsFS = typeof (window as any).showSaveFilePicker === 'function';
+
   // ── Inicializa o player de áudio ──
   useEffect(() => {
     playerRef.current = new AudioPlayer();
@@ -107,24 +113,89 @@ export default function App() {
   };
 
   // ── Manipulação de Arquivos ──
+
+  // Importar: usa showOpenFilePicker quando disponível para guardar o handle
+  // (permitindo sobrescrever depois). Sem suporte, cai no <input type="file">.
+  const handleImport = async () => {
+    if (supportsFS) {
+      try {
+        const [handle] = await (window as any).showOpenFilePicker({
+          types: [{ description: 'Texto', accept: { 'text/plain': ['.txt'] } }],
+        });
+        const file = await handle.getFile();
+        setText(await file.text());
+        fileHandleRef.current = handle;
+        setHasFileHandle(true);
+        setStatusMsg(`Arquivo "${file.name}" importado`);
+      } catch {
+        // Usuário cancelou o seletor — nada a fazer.
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  // Fallback de importação para navegadores sem File System Access API.
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       setText(event.target?.result as string);
+      // O <input type="file"> não fornece handle de escrita; sem sobrescrita.
+      fileHandleRef.current = null;
+      setHasFileHandle(false);
     };
     reader.readAsText(file);
   };
 
-  const handleDownloadTxt = () => {
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'composicao.txt';
-    a.click();
-    URL.revokeObjectURL(url);
+  // Escreve o texto atual em um handle de arquivo.
+  const escreverHandle = async (handle: FileSystemFileHandle) => {
+    const writable = await (handle as any).createWritable();
+    await writable.write(text);
+    await writable.close();
+  };
+
+  // Salvar: sobrescreve o arquivo original (quando há handle). Caso contrário,
+  // delega para "Salvar como".
+  const handleSave = async () => {
+    if (fileHandleRef.current) {
+      try {
+        await escreverHandle(fileHandleRef.current);
+        setStatusMsg('Arquivo salvo (original sobrescrito)');
+      } catch (err: any) {
+        setErro('Falha ao salvar: ' + (err?.message || 'erro desconhecido'));
+      }
+    } else {
+      handleSaveAs();
+    }
+  };
+
+  // Salvar como: escolhe novo arquivo (FS API) ou baixa (.txt) como fallback.
+  const handleSaveAs = async () => {
+    if (supportsFS) {
+      try {
+        const handle = await (window as any).showSaveFilePicker({
+          suggestedName: 'composicao.txt',
+          types: [{ description: 'Texto', accept: { 'text/plain': ['.txt'] } }],
+        });
+        await escreverHandle(handle);
+        fileHandleRef.current = handle;
+        setHasFileHandle(true);
+        setStatusMsg('Arquivo salvo');
+      } catch {
+        // Usuário cancelou o seletor.
+      }
+    } else {
+      // Fallback: download tradicional.
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'composicao.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const handleDownloadMidi = () => {
@@ -181,11 +252,14 @@ export default function App() {
           {/* Ações de Arquivo */}
           <div className="flex gap-4">
             <input type="file" accept=".txt" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded border border-white/10 transition-colors text-sm font-mono uppercase">
+            <button onClick={handleImport} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded border border-white/10 transition-colors text-sm font-mono uppercase">
               <Upload className="w-4 h-4" /> Importar TXT
             </button>
-            <button onClick={handleDownloadTxt} disabled={!text.trim()} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-white/10 transition-colors text-sm font-mono uppercase">
-              <Download className="w-4 h-4" /> Salvar TXT
+            <button onClick={handleSave} disabled={!text.trim() || !hasFileHandle} title={hasFileHandle ? 'Sobrescreve o arquivo importado' : 'Importe um arquivo para sobrescrever'} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-white/10 transition-colors text-sm font-mono uppercase">
+              <Download className="w-4 h-4" /> Salvar
+            </button>
+            <button onClick={handleSaveAs} disabled={!text.trim()} title={supportsFS ? 'Salvar em um novo arquivo' : 'Baixar como .txt'} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-white/10 transition-colors text-sm font-mono uppercase">
+              <Download className="w-4 h-4" /> Salvar como
             </button>
             <button onClick={handleDownloadMidi} disabled={!midiBase64} className="flex items-center gap-2 px-4 py-2 bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-orange-500/30 transition-colors text-sm font-mono uppercase ml-auto">
               <FileAudio className="w-4 h-4" /> Baixar MIDI
@@ -216,7 +290,10 @@ export default function App() {
 
           {/* Configurações Globais */}
           <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <ConfigCard icon={<Clock className="w-4 h-4" />} label="BPM" value={bpm} onChange={setBpm} min={40} max={240} />
+            {/* min=10 alinhado ao piso do backend (ContextoGlobal.desacelerar).
+                O enunciado não define teto; adotamos 300 como teto de UI
+                (suposição documentada em docs/Registros/CorrecaoCampoBpm.md). */}
+            <ConfigCard icon={<Clock className="w-4 h-4" />} label="BPM" value={bpm} onChange={setBpm} min={10} max={300} />
           </section>
 
           {/* Botão de Tocar / Parar */}
@@ -269,7 +346,6 @@ export default function App() {
                   <li><span className="text-orange-400">V</span>: Diminui a oitava da voz.</li>
                   <li><span className="text-orange-400">&gt; / &lt;</span>: Aumenta / Diminui o BPM global.</li>
                   <li><span className="text-orange-400">!</span>: Instrumento Harmônica (GM 22).</li>
-                  <li><span className="text-orange-400">Vogais O, I, U</span>: Gaita de Foles (GM 110).</li>
                   <li><span className="text-orange-400">Dígito Par</span>: Soma ao instrumento atual.</li>
                   <li><span className="text-orange-400">Dígito Ímpar ou ;</span>: Tubular Bells (GM 15).</li>
                   <li><span className="text-orange-400">,</span>: Church Organ (GM 20).</li>
@@ -354,6 +430,29 @@ function ConfigCard({ icon, label, value, onChange, min, max }: {
   min: number;
   max: number;
 }) {
+  // Rascunho local (string) para permitir digitação livre, inclusive
+  // estados intermediários ("1", "") sem clamp a cada tecla.
+  const [draft, setDraft] = useState(String(value));
+
+  // Sincroniza o rascunho quando o valor confirmado muda por fora
+  // (ex.: reset do formulário ou comandos > / < do texto).
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+
+  // Aplica o clamp e confirma APENAS ao confirmar (blur/Enter).
+  // Se o conteúdo for inválido (vazio/NaN), reverte ao último valor válido.
+  const confirmar = () => {
+    const parsed = parseInt(draft, 10);
+    if (Number.isNaN(parsed)) {
+      setDraft(String(value)); // reverte
+      return;
+    }
+    const clamped = Math.max(min, Math.min(max, parsed));
+    onChange(clamped);
+    setDraft(String(clamped));
+  };
+
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
       <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest opacity-50 font-mono">
@@ -362,8 +461,17 @@ function ConfigCard({ icon, label, value, onChange, min, max }: {
       </div>
       <input
         type="number"
-        value={value}
-        onChange={(e) => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || min)))}
+        min={min}
+        max={max}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)} // sem clamp por tecla
+        onBlur={confirmar}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            confirmar();
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
         className="bg-transparent text-xl font-bold font-mono w-full focus:outline-none text-orange-500"
       />
     </div>
