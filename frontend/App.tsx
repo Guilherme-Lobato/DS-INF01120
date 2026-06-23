@@ -415,50 +415,15 @@ function ConfigCard({ icon, label, value, onChange, min, max, showSlider }: {
   max: number;
   showSlider?: boolean;
 }) {
-  // Rascunho local (string) para permitir digitação livre, inclusive
-  // estados intermediários ("1", "") sem clamp a cada tecla.
-  const [draft, setDraft] = useState(String(value));
-
-  // Sincroniza o rascunho quando o valor confirmado muda por fora
-  // (ex.: reset do formulário ou comandos > / < do texto).
-  useEffect(() => {
-    setDraft(String(value));
-  }, [value]);
-
-  // Aplica o clamp e confirma APENAS ao confirmar (blur/Enter).
-  // Se o conteúdo for inválido (vazio/NaN), reverte ao último valor válido.
-  const confirmar = () => {
-    const parsed = parseInt(draft, 10);
-    if (Number.isNaN(parsed)) {
-      setDraft(String(value)); // reverte
-      return;
-    }
-    const clamped = Math.max(min, Math.min(max, parsed));
-    onChange(clamped);
-    setDraft(String(clamped));
-  };
-
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest opacity-50 font-mono">
-        {icon}
-        {label}
+      <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-widest opacity-50 font-mono">
+        <div className="flex items-center gap-2">
+            {icon}
+            {label}
+        </div>
+        <span className="text-xl font-bold font-mono text-orange-500">{value}</span>
       </div>
-      <input
-        type="number"
-        min={min}
-        max={max}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)} // sem clamp por tecla
-        onBlur={confirmar}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            confirmar();
-            (e.target as HTMLInputElement).blur();
-          }
-        }}
-        className="bg-transparent text-xl font-bold font-mono w-full focus:outline-none text-orange-500"
-      />
       {showSlider && (
         <input
           type="range"
