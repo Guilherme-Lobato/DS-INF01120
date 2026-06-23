@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://ds-inf01120.onrender.com/';
 
 export interface ApiConfig {
   texto: string;

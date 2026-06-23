@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Play, Square, Music, Volume2, Clock, Layers, Trash2, Wifi, WifiOff, Upload, Download, FileAudio } from 'lucide-react';
+import { Play, Square, Music, Volume2, Clock, Layers, Trash2, Upload, Download, FileAudio } from 'lucide-react';
 import { gerarSequencia, checarBackend, type ApiEvento } from './services/api';
 import { AudioPlayer } from './services/audio';
 
@@ -225,23 +225,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tighter uppercase italic">Texto para Música</h1>
-            <p className="text-[10px] uppercase tracking-widest opacity-50 font-mono">UFRGS — INF01120 — Fase 2 (Polifonia)</p>
           </div>
-        </div>
-        <div className="flex items-center gap-2 text-xs font-mono">
-          {backendOnline === null ? (
-            <span className="opacity-40">verificando...</span>
-          ) : backendOnline ? (
-            <>
-              <Wifi className="w-4 h-4 text-green-400" />
-              <span className="text-green-400">Backend online</span>
-            </>
-          ) : (
-            <>
-              <WifiOff className="w-4 h-4 text-red-400" />
-              <span className="text-red-400">Backend offline</span>
-            </>
-          )}
         </div>
       </header>
 
@@ -293,7 +277,7 @@ export default function App() {
             {/* min=10 alinhado ao piso do backend (ContextoGlobal.desacelerar).
                 O enunciado não define teto; adotamos 300 como teto de UI
                 (suposição documentada em docs/Registros/CorrecaoCampoBpm.md). */}
-            <ConfigCard icon={<Clock className="w-4 h-4" />} label="BPM" value={bpm} onChange={setBpm} min={10} max={300} />
+            <ConfigCard icon={<Clock className="w-4 h-4" />} label="BPM" value={bpm} onChange={setBpm} min={10} max={300} showSlider />
           </section>
 
           {/* Botão de Tocar / Parar */}
@@ -422,13 +406,14 @@ export default function App() {
 
 // ── Componentes auxiliares ──
 
-function ConfigCard({ icon, label, value, onChange, min, max }: {
+function ConfigCard({ icon, label, value, onChange, min, max, showSlider }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   onChange: (v: number) => void;
   min: number;
   max: number;
+  showSlider?: boolean;
 }) {
   // Rascunho local (string) para permitir digitação livre, inclusive
   // estados intermediários ("1", "") sem clamp a cada tecla.
@@ -474,6 +459,16 @@ function ConfigCard({ icon, label, value, onChange, min, max }: {
         }}
         className="bg-transparent text-xl font-bold font-mono w-full focus:outline-none text-orange-500"
       />
+      {showSlider && (
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full accent-orange-500"
+        />
+      )}
     </div>
   );
 }
