@@ -234,7 +234,7 @@ export default function App() {
         {/* ── Coluna Esquerda: Entrada e Controles ── */}
         <div className="lg:col-span-8 space-y-6">
           {/* Ações de Arquivo */}
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <input type="file" accept=".txt" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
             <button onClick={handleImport} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded border border-white/10 transition-colors text-sm font-mono uppercase">
               <Upload className="w-4 h-4" /> Importar TXT

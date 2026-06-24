@@ -35,7 +35,7 @@ class EstadoMusical:
         volume_max: int = 127,
     ):
         self._oitava = ControleOitava(
-            atual=oitava, default=oitava_default, maximo=oitava_max
+            atual=oitava, default=oitava_default, maximo=oitava_max, minimo=oitava_min
         )
         self._volume = ControleVolume(atual=volume, maximo=volume_max)
         self._historico = HistoricoNotas()
@@ -80,9 +80,7 @@ class EstadoMusical:
         self._volume.dobrar()
 
     def diminuir_oitava(self) -> None:
-        self.oitava -= 1
-        if self.oitava < self.oitava_min:
-            self.oitava = self.oitava_default
+        self._oitava.diminuir()
 
     def trocar_instrumento(self, novo: int) -> None:
         self.instrumento = novo % 128

@@ -18,7 +18,7 @@ class RegraDefault(RegraBase):
 
     def processar(self, char: str, estado: EstadoMusical) -> EventoMusical:
         if estado.anterior_era_nota and estado.ultima_nota:
-            # Repete a última nota, mas este caractere NÃO conta como nota
+            # Repete a última nota
             evento = EventoMusical(
                 tipo=TipoEvento.TOCAR_NOTA,
                 char=char,
@@ -27,8 +27,10 @@ class RegraDefault(RegraBase):
                 volume=estado.volume,
                 instrumento=estado.instrumento,
             )
+            # A repetição CONTA como uma nota para a próxima regra
+            estado.registrar_nota(estado.ultima_nota)
         else:
             evento = EventoMusical(tipo=TipoEvento.PAUSA, char=char)
+            estado.registrar_nao_nota()
 
-        estado.registrar_nao_nota()
         return evento

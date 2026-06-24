@@ -25,7 +25,9 @@ class TestPolifoniaService(unittest.TestCase):
         self.assertEqual(timeline[2]['beat_absoluto'], 1.0) # O espao nǜo gasta beat
 
     def test_gerar_timeline_duas_vozes(self):
-        texto = "A\n\n[2] B" # Included empty line to test continue
+        texto = "A
+
+[2] B" # Included empty line to test continue
         timeline = self.service.gerar_timeline(texto)
 
         # Voz 0 toca A no beat 0
